@@ -1,0 +1,17 @@
+{
+  "name": "gate-app",
+  "version": "1.0.0",
+  "description": "node application for smarthouse gate functionality",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "SDubovic",
+  "license": "ISC",
+  "dependencies": {
+    "@eventstore/db-client": "^6.2.1",
+    "@tdengine/websocket": "^3.1.7",
+    "express": "^5.1.0",
+    "kafkajs": "^2.2.4"
+  }
+}

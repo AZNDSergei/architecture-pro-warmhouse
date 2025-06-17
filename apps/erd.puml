@@ -1,0 +1,60 @@
+@startuml
+!define table(x) class x << (T,#FFAAAA) >>
+!define primary_key(x) <u>x</u>
+
+' Таблицы
+table(users) {
+  primary_key(id): UUID
+  email: String
+  name: String
+  registered_at: DateTime
+  phone: String
+}
+
+table(homes) {
+  primary_key(id): UUID
+  name: String
+  address: String
+  owner_id: UUID [FK → users.id]
+}
+
+table(rooms) {
+  primary_key(id): UUID
+  name: String
+  info: String
+  home_id: UUID [FK → homes.id]
+}
+
+table(devices) {
+  primary_key(id): UUID
+  name: String
+  type: Enum(DeviceType)
+  model: String
+  firmware_version: String
+  status: String
+  room_id: UUID [FK → rooms.id]
+  home_id: UUID [FK → homes.id]
+  activation_code: String
+  is_activated: Boolean
+  activated_at: DateTime
+}
+
+table(sensor_data) {
+  primary_key(id): UUID
+  device_id: UUID [FK → devices.id]
+  timestamp: DateTime
+  type: String
+  value: String
+}
+
+table(automation_scenarios) {
+  primary_key(id): UUID
+  name: String
+  user_id: UUID [FK → users.id]
+  enabled: Boolean
+  created_at: DateTime
+}
+
+table(automation_rules) {
+  primary_key(id): UUID
+  scenario_id: UUID [FK → auto]()_

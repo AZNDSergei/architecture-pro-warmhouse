@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "net-device-metrics": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}
