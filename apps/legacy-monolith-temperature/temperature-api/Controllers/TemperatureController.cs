@@ -1,6 +1,5 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
-using temperature_api.Services;
 
 namespace temperature_api.Controllers
 {
@@ -37,14 +36,8 @@ namespace temperature_api.Controllers
 			}
 
 			var temperature = random.Next(-30, 50); // Temperature between -30 and 50 degrees Celsius
-			using var scope = _serviceScopeFactory.CreateScope();
-			var temperatureSender = scope.ServiceProvider.GetService<TemperatureSender>();
 
-			await temperatureSender.ProduceAsync(new Models.SendTemperatureCommand
-			{
-				Location = location,
-				Temperature = temperature
-			});
+
 			return Ok(new { Location = location, Temperature = temperature });
 		}
 	}

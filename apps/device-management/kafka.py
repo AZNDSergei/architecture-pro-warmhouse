@@ -1,24 +1,40 @@
 import json
-import asyncio
-from typing import Optional
+from typing import AsyncGenerator, Optional
 
 from aiokafka import AIOKafkaProducer
 
-kafka_producer: Optional[AIOKafkaProducer] = None
+__all__ = ["get_kafka_producer", "shutdown_kafka"]
 
-async def get_kafka_producer() -> AIOKafkaProducer:
-    global kafka_producer
-    if kafka_producer is None:
-        loop = asyncio.get_event_loop()
-        kafka_producer = AIOKafkaProducer(
-            bootstrap_servers="kafka:9092",
-            value_serializer=lambda v: json.dumps(v).encode("utf-8"),
+BOOTSTRAP_SERVERS = "kafka:9092"
+
+
+def _json_serializer(obj) -> bytes:
+    return json.dumps(obj, default=str).encode()
+_kafka_producer: Optional[AIOKafkaProducer] = None
+
+
+async def get_kafka_producer() -> AsyncGenerator[AIOKafkaProducer, None]:
+
+    global _kafka_producer
+
+    if _kafka_producer is None:
+        _kafka_producer = AIOKafkaProducer(
+            bootstrap_servers=BOOTSTRAP_SERVERS,
+            key_serializer=str.encode,
+            value_serializer=_json_serializer,
         )
-        await kafka_producer.start()
-    return kafka_producer
+        await _kafka_producer.start()
 
-async def shutdown_kafka():
-    global kafka_producer
-    if kafka_producer:
-        await kafka_producer.stop()
-        kafka_producer = None
+    try:
+        yield _kafka_producer
+    finally:
+       
+        pass
+
+
+
+async def shutdown_kafka() -> None:
+    global _kafka_producer
+    if _kafka_producer is not None:
+        await _kafka_producer.stop()
+        _kafka_producer = None

@@ -9,14 +9,13 @@ namespace temperature_api
 		public static void Main(string[] args)
 		{
 			var builder = WebApplication.CreateBuilder(args);
-
 			// Add services to the container.
 
 			builder.Services.AddControllers();
 			builder.Services.AddHealthChecks();
-			builder.Services.AddSingleton<TemperatureSender>();
+			builder.Services.AddSingleton<NewSystemIntegrationEventSender>();
 			//var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-			builder.Services.AddScoped(_ => new PostgresSensorRepository("Host=smart-home-postgres;Port=5432;Database=smarthome;Username=postgres;Password=postgres;"));
+			builder.Services.AddScoped(_ => new PostgresSensorRepository("Host=legacy-monolith-db;Port=5432;Database=smarthome;Username=postgres;Password=postgres;"));
 
 			builder.Services.Configure<KafkaSettings>(builder.Configuration.GetSection("Kafka"));
 

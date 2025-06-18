@@ -4,8 +4,7 @@ from sqlalchemy.orm import relationship, declarative_base
 from enum import Enum as PyEnum
 from datetime import datetime
 import uuid
-
-Base = declarative_base()
+from database import Base
 
 class DeviceType(PyEnum):
     SENSOR = "SENSOR"
@@ -42,18 +41,23 @@ class Room(Base):
     home_id = Column(UUID(as_uuid=True), ForeignKey('homes.id'))
 
 class Device(Base):
-    __tablename__ = 'devices'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = Column(String)
-    type = Column(Enum(DeviceType))
-    model = Column(String)
-    firmware_version = Column(String)
-    status = Column(String)
-    room_id = Column(UUID(as_uuid=True), ForeignKey('rooms.id'))
-    home_id = Column(UUID(as_uuid=True), ForeignKey('homes.id'))
-    activation_code = Column(String, unique=True, nullable=True)
-    is_activated = Column(Boolean, default=False)
-    activated_at = Column(DateTime, nullable=True)
+    __tablename__ = "devices"
+    id               = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name             = Column(String, nullable=False)
+    type             = Column(Enum(DeviceType), nullable=False)
+    model            = Column(String, nullable=False)
+    firmware_version = Column(String, nullable=False, default="legacy-1.0")
+    status           = Column(String, nullable=False, default="inactive")
+    room_id = Column(UUID(as_uuid=True),
+                     ForeignKey("rooms.id", ondelete="SET NULL"),
+                     nullable=True)
+
+    home_id = Column(UUID(as_uuid=True),
+                     ForeignKey("homes.id", ondelete="SET NULL"),
+                     nullable=True)
+    activation_code = Column(String, unique=False, nullable=True)
+    is_activated    = Column(Boolean, default=False, nullable=False)
+    activated_at    = Column(DateTime, nullable=True)
 
 class SensorData(Base):
     __tablename__ = 'sensor_data'

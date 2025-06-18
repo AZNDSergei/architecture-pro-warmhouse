@@ -1,4 +1,4 @@
-version: "2.4"
+version: "3.9"
 services:
   kafka:
     image: bitnami/kafka:3.6.1
@@ -26,7 +26,7 @@ services:
         sleep 10
 
         echo "Creating required topics..."
-        topics="newDeviceNotification deleteDeviceNotification uiActivatedCommand uiCommand autoCommand acknowledgement newScenario"
+        topics="legacyAddDevice newDeviceNotification deleteDeviceNotification uiActivatedCommand uiCommand autoCommand acknowledgement newScenario"
 
         for topic in $$topics; do
           if [ -n "$$topic" ]; then
@@ -44,8 +44,10 @@ services:
   device-management:
     build: device-management/.
     depends_on:
-      - db
-      - kafka
+      db:
+        condition: service_started
+      kafka:
+        condition: service_healthy
     environment:
       - DATABASE_URL=postgresql://postgres:device-management-user@db:5432/dockert
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
@@ -60,6 +62,42 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=device-management-user
       - POSTGRES_DB=dockert
+
+
+  legacy-monolith:
+    build: ./legacy-monolith-temperature/temperature-api/
+    depends_on: 
+      kafka:
+        condition: service_healthy
+      legacy-monolith-db:
+        condition: service_started
+    environment:
+    - ASPNETCORE_URLS=http://0.0.0.0:8082
+    - Kafka__BootstrapServers=kafka:9092
+    ports:
+      - "8082:8082"
+  
+  legacy-monolith-db:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data_old:/var/lib/postgresql/data/
+      - ./database-init/init-old-monolith-db.sql:/docker-entrypoint-initdb.d/init-old-monolith-db.sql:ro
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=smarthome
+    ports:
+      - 5430:5432
+
+  go-bridge-for-legacy:
+    build: ./go-bridge-for-legacy
+    depends_on:
+      - kafka
+    ports:
+      - "8085:8085"
+    environment:
+      - KAFKA_BROKER=kafka:9092
+      - API_KEY=my-secret-token
 
   node-action-initializer:
     build: ./node-action-initiation
@@ -102,6 +140,7 @@ services:
     environment:
       - KAFKA_BROKER=kafka:9092
       - API_KEY=my-secret-token
+
   minio-streaming:
     image: minio/minio
     ports:
@@ -211,3 +250,4 @@ volumes:
   mongo_data:
   loki-data:
   prometheus-data:
+  postgres_data_old:

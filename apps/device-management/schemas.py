@@ -58,13 +58,18 @@ class DeviceBase(BaseModel):
     name: str
     type: DeviceType
     model: str
-    firmware_version: str
-    status: str
-    room_id: Optional[UUID4]
-    home_id: Optional[UUID4]
+    firmware_version: Optional[str] = None
+    status: Optional[str] = None
+    room_id: Optional[UUID4] = None
+    home_id: Optional[UUID4] = None
     activation_code: Optional[str] = None
-    is_activated: Optional[bool] = False
+    is_activated: bool = False
     activated_at: Optional[datetime] = None
+
+
+class DeviceCreate(DeviceBase):
+    pass
+
 
 class DeviceResponse(DeviceBase):
     id: UUID4

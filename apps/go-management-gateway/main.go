@@ -6,35 +6,59 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"strings"
 )
 
-const targetBase = "http://device-management:80"
+// конечные сервисы
+const (
+	targetBase      = "http://device-management:80" // v2
+	targetBaseOld   = "http://legacy-monolith:8082" // v1
+	listenAddr      = ":8081"
+	defaultAPIToken = "по необходимости имплементирую"
+)
 
-func main() {
-	targetURL, err := url.Parse(targetBase)
+// создаём готовый ReverseProxy c общим Director
+func newProxy(target string) *httputil.ReverseProxy {
+	targetURL, err := url.Parse(target)
 	if err != nil {
-		log.Fatalf("Invalid target URL: %v", err)
+		log.Fatalf("Invalid target URL %q: %v", target, err)
 	}
 
 	proxy := httputil.NewSingleHostReverseProxy(targetURL)
 
-	originalDirector := proxy.Director
+	origDirector := proxy.Director
 	proxy.Director = func(req *http.Request) {
-		originalDirector(req)
-		req.Header.Set("Authorization", "Bearer "+getEnv("API_KEY", "my-secret-token"))
+		origDirector(req)
+		req.Header.Set("Authorization", "Bearer "+getEnv("API_KEY", defaultAPIToken))
 	}
+
+	return proxy
+}
+
+func main() {
+	proxyV1 := newProxy(targetBaseOld)
+	proxyV2 := newProxy(targetBase)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Proxying %s %s", r.Method, r.URL.Path)
-		proxy.ServeHTTP(w, r)
+
+		switch {
+		case strings.HasPrefix(r.URL.Path, "/api/v1.0/"):
+			proxyV1.ServeHTTP(w, r)
+		case strings.HasPrefix(r.URL.Path, "/api/v2.0/"):
+			proxyV2.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
 	})
 
-	log.Println("Gateway listening on :8081")
-	if err := http.ListenAndServe(":8081", nil); err != nil {
+	log.Printf("Gateway listening on %s", listenAddr)
+	if err := http.ListenAndServe(listenAddr, nil); err != nil {
 		log.Fatalf("Server failed: %v", err)
 	}
 }
 
+// getEnv возвращает значение переменной окружения или запасное
 func getEnv(key, fallback string) string {
 	if val, ok := os.LookupEnv(key); ok {
 		return val
