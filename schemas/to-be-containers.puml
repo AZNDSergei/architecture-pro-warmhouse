@@ -1,0 +1,89 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(person, "Покупатель устройства", "Пользователь умного дома")
+Boundary(administration, "Subdomain - Администрирование") {
+System_Boundary(management, "Контекст: Менеджмент устройств") {
+  Container(management_gateway, "Management Gateway", "Go", "Прием запросов с UI пользовательских систем")
+  Container(device_management, "Device Management", "Python FastAPI", "Управление устройствами и сценариями")
+  ContainerDb(admin_postgre, "Relational Database", "PostgreSQL", "Дома, комнаты, устройства, пользователи, сценарии")
+}
+
+Rel(management_gateway, device_management, "REST", "Синхронные запросы на администрирование")
+Rel(device_management, admin_postgre, "HTTP", "Базовые CRUD операции")
+}
+Boundary(device_activity, "Subdomain (core) - Жизнь устройств") {
+System_Boundary(state_control, "Контекст: Контроль состояния") {
+  Container(native_device_gateway, "Native Device Gateway", "Go", "Прием запросов с родных устройств")
+  Container(side_device_gateway, "Side Device Gateway (mapping)", "Go", "Прием запросов с устройств партнеров")
+  Container(device_metrics, "Device Metrics", ".NET Console APP", "Прием метрик и запись в Prometheus")
+}
+
+Rel(native_device_gateway, device_metrics, "kafka topic", "Передача метрик")
+Rel(side_device_gateway, device_metrics, "kafka topic", "Передача mapped метрик")
+
+System_Boundary(stream_processing, "Контекст: Потоковая обработка") {
+  Container(streaming_gateway, "Streaming Gateway", "Go", "Прием данных с потоковых устройств")
+  ContainerDb(s3, "S3", "Minio", "Сохранение видеофайлов")
+}
+
+Rel(streaming_gateway, s3, "octet-stream", "File chunks")
+
+System_Boundary(action_initialization, "Контекст: Исполнение сценариев") {
+  Container(action_initiation, "Action Initiation", "Node", "Отправка запросов на изменение состояния устройств (сценарии)")
+  ContainerDb(immutable, "Immutable Storage", "EventStore", "Immutable-лог для всех операций")
+}
+
+Rel(action_initiation, immutable, "HTTP")
+Container(go_bridge, "Go", "Мост для legacy-системы", "Маппинг legacy-модели в новый формат")
+Container(grafana, "Grafana", "Визуализация логов и метрик")
+Container(prometheus, "Prometheus", "Сбор метрик")
+Container(loki, "Loki", "Сбор логов")
+Rel(device_metrics, loki, "REST", "Запись метрик")
+Rel(device_metrics, prometheus, "REST", "Запись логов")
+Rel(loki, grafana, "REST", "Передача данных для визуализации по таймеру")
+Rel(prometheus, grafana, "REST", "Передача данных для визуализации по таймеру")
+
+}
+Boundary(communication_sub, "Subdomain (supporting) - Поддомен коммуникации") {
+System_Boundary(communication, "Контекст: Оповещение") {
+  Container(notification, "Notification", "Node", "Отправка email, push, sms")
+  ContainerDb(immutable_notif, "Immutable Storage", "EventStore", "Immutable-лог для всех операций нотификации")
+}
+
+Rel(notification, immutable_notif, "HTTP")
+
+System_Boundary(technical_support, "Контекст: Техническая поддержка") {
+  Container(supporting, "Supporting", "Node", "Управление тикетами")
+  ContainerDb(nosql, "NoSQL", "MongoDB", "База данных для работы с разными каналами поддержки")
+}
+
+Rel(supporting, nosql, "HTTP")
+}
+Container_Ext(kafka, "Kafka", "Внутренние коммуникации")
+
+Container_Ext(nativeDevices, "Нативные устройства", "Родные устройства")
+Container_Ext(partnerDevices, "Устройства партнёров", "Сторонние устройства с поддержкой интеграции")
+Container_Ext(voiceAssistant, "AI-ассистенты", "Голосовые помощники: Alexa, Google Assistant и т.п.")
+Container_Ext(external_feedback_system, "СRM/CallCenter Software", "Принимает фидбек пользователей и создаёт тикеты в системе")
+Container_Ext(kafka, "Kafka", "Шина сообщений между микросервисами")
+Container_Ext(cams, "Cams", "Камеры/прочие поточные устройства")
+Container_Ext(old_monolith, "Старая версия приложения", "Теплый дом")
+
+
+Rel(old_monolith, kafka, "topic",  "Передача команд со старого устройства в шину")
+Rel(device_management, kafka, "topic", "Запрос на изменение состояния устройств, нотификации, оповещения о новых сценариях")
+Rel(native_device_gateway, kafka, "topic", "Проксирование информации о родных устройствах")
+Rel(side_device_gateway, kafka, "topic", "Проксирование информации об устройствах партнеров")
+Rel(kafka, action_initialization, "topic", "Чтение запросов на изменение состояния устройств, сценариев")
+Rel(kafka, notification, "topic",  "Чтение запросов на оповещение пользователя")
+Rel(kafka, go_bridge, "topic",  "Передача legacy-формата данных в go-bridge")
+
+Rel(person, management_gateway, "REST", "Команды управления устройствами, регистрация")
+Rel(nativeDevices, native_device_gateway, "REST/MQTT", "Информация о родных устройствах")
+Rel(partnerDevices, side_device_gateway, "REST/MQTT", "Информация об устройствах партнеров")
+Rel(cams, streaming_gateway, "WebRTC", "Потоковая обработка")
+Rel(voiceAssistant, side_device_gateway, "REST/MQTT", "Операции для работы с умными помощниками")
+Rel(external_feedback_system, supporting, "REST", "Запросы на создание тикетов")
+
+@enduml
