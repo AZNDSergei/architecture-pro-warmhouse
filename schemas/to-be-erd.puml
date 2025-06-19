@@ -1,0 +1,110 @@
+@startuml
+enum DeviceType {
+  SENSOR
+  CAMERA
+  SWITCH
+}
+
+enum TriggerType {
+  SENSOR
+  TIME
+}
+
+enum ActionType {
+  TURN_ON
+  TURN_OFF
+}
+
+
+entity "User" as User {
+  * id : UUID4
+  --
+  email : string
+  name : string
+  phone : string
+  registered_at : datetime
+}
+
+entity "Home" as Home {
+  * id : UUID4
+  --
+  name : string
+  address : string
+  owner_id : UUID4
+}
+
+entity "Room" as Room {
+  * id : UUID4
+  --
+  name : string
+  info : string
+  home_id : UUID4
+}
+
+entity "Device" as Device {
+  * id : UUID4
+  --
+  name : string
+  type : DeviceType
+  model : string
+  location: string
+  unit: string
+  firmware_version : string
+  status : string
+  room_id : UUID4
+  home_id : UUID4
+  activation_code : string
+  is_activated : bool
+  activated_at : datetime
+}
+
+entity "SensorData" as SensorData {
+  * id : UUID4
+  --
+  device_id : UUID4
+  timestamp : datetime
+  type : string
+  value : string
+}
+
+entity "Scenario" as Scenario {
+  * id : UUID4
+  --
+  name : string
+  user_id : UUID4
+  enabled : bool
+  created_at : datetime
+}
+
+entity "Rule" as Rule {
+  * id : UUID4
+  --
+  scenario_id : UUID4
+  trigger_type : TriggerType
+  trigger_condition : string
+  action_type : ActionType
+  action_target : UUID4
+}
+
+entity "Notification" as Notification {
+  * id : UUID4
+  --
+  user_id : UUID4
+  title : string
+  body : string
+  sent_at : datetime
+  read : bool
+}
+
+
+User     ||--o{ Home          : "owns"
+Home     ||--o{ Room          : "contains"
+Home     ||--o{ Device        : "hosts"
+Room     ||--o{ Device        : "has"
+Device   ||--o{ SensorData    : "produces"
+User     ||--o{ Scenario      : "creates"
+Scenario ||--o{ Rule          : "includes"
+Rule     }o--|| Device        : "acts on"
+User     ||--o{ Notification  : "receives"
+
+@enduml

@@ -1,0 +1,46 @@
+@startuml
+title Последовательность создания сценария автоматизации
+
+actor Client
+participant "Device-Management\nFastAPI service" as DM
+database  Postgres
+queue     Kafka
+participant "Node-action-initializer" as NAI
+database  EventStoreDB
+collections "Devices\n(IoT)" as IoT
+
+'------------------------------------------------------------------
+== Шаг 1. Регистрация пользователя ==
+Client  -> DM          : POST /register\n(email, name, …)
+DM      -> Postgres    : INSERT INTO users …
+Postgres--> DM         : OK (new user id)
+DM      --> Client     : 201 Created (User)
+
+'------------------------------------------------------------------
+== Шаг 2. Добавление устройства ==
+Client  -> DM          : POST /sensors\n(name, type, …)
+DM      -> Postgres    : INSERT INTO sensors …
+Postgres--> DM         : OK (device id)
+DM      -> Kafka       : newDeviceNotification\n(key=id, value=JSON)
+Kafka   --> DM         : ack
+DM      --> Client     : 201 Created (Device)
+
+'------------------------------------------------------------------
+== Шаг 3. Создание сценария ==
+Client  -> DM          : POST /automation-scenarios\n(user_id, rules)
+DM      -> Postgres    : INSERT scenario, rules
+Postgres--> DM         : OK (scenario id + rules)
+DM      -> Kafka       : autoCommand\n(key=id, value=JSON)
+Kafka   --> DM         : ack
+DM      --> Client     : 201 Created (Scenario)
+
+'------------------------------------------------------------------
+== Шаг 4. Выполнение сценария ==
+NAI     -> Kafka       : subscribe(autoCommand)
+Kafka   --> NAI        : autoCommand message
+NAI     -> EventStoreDB: appendToStream(autoCommand)
+loop for each rule
+    NAI -> IoT        : {action_type} {deviceId}
+end
+
+@enduml
