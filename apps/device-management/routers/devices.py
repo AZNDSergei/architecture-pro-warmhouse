@@ -60,8 +60,8 @@ async def create_device(
     try:
         await producer.send_and_wait(
             topic="newDeviceNotification",
-            key=str(device.id),            # key_serializer=str.encode
-            value=_device_payload(device), # value_serializer -> JSON-bytes
+            key=str(device.id),           
+            value=_device_payload(device), 
         )
         print("[Kafka] newDeviceNotification sent")
     except Exception as e:

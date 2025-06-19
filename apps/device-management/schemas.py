@@ -58,6 +58,8 @@ class DeviceBase(BaseModel):
     name: str
     type: DeviceType
     model: str
+    location: str
+    unit: str
     firmware_version: Optional[str] = None
     status: Optional[str] = None
     room_id: Optional[UUID4] = None

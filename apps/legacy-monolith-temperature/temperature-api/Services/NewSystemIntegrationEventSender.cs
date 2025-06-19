@@ -25,9 +25,15 @@ namespace temperature_api.Services
 		{
 			try
 			{
+					var options = new JsonSerializerOptions
+					{
+						PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+					};
+					var payload = JsonSerializer.Serialize(command, options);
+
 				var deliveryResult = await _producer.ProduceAsync(
 					"legacyAddDevice",
-					new Message<Null, string> { Value = JsonSerializer.Serialize(command) });
+					new Message<Null, string> { Value = payload });
 
 				Console.WriteLine($"[Kafka] Delivered message to '{deliveryResult.TopicPartitionOffset}': {deliveryResult.Value}");
 			}

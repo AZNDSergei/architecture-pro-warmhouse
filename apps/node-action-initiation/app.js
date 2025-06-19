@@ -11,7 +11,7 @@ const kafka = new Kafka({
   logLevel: logLevel.INFO,
 });
 
-const consumer = kafka.consumer({ groupId: "node-consumer-group" });
+const consumer = kafka.consumer({ groupId: "node-action-initiation-group" });
 const admin = kafka.admin();
 
 const topics = ["autoCommand", "uiCommand"];
@@ -94,20 +94,20 @@ async function startKafkaConsumer() {
     console.error("Error writing to EventStoreDB:", err);
   }
 
-  // 🚦 Обработка autoCommand
+ 
   if (topic === "autoCommand") {
-    try {
-      const fixedSteps = data.steps.replace(/'/g, '"');
-      const steps = JSON.parse(fixedSteps);
+  console.log("New Scenario was obtained by node-action-initializer");
+  const steps = (data.rules || []).map((r, idx) => ({
+    order: idx + 1,
+    action: r.action_type,
+    deviceId: r.action_target,
+    type: r.trigger_type,
+  }));
 
-      console.log("Running scenario steps...");
-      steps.forEach(s =>
-        console.log(`Automatization step ${s.order}: ${s.action} device ${s.deviceId} (${s.type})`)
-      );
-    } catch (err) {
-      console.error("Failed to parse steps in autoCommand:", err);
-    }
-  }
+  steps.forEach(s =>
+    console.log(`Automatization step ${s.order}: ${s.action} device ${s.deviceId}`)
+  );
+}
 
   if (topic === "uiCommand") {
     console.log("uiCommand is obtained");

@@ -46,7 +46,7 @@ const (
 	targetURL          = "http://device-management:80/api/v2.0/sensors"
 	topicLegacyAdd     = "legacyAddDevice"
 	defaultBrokers     = "kafka:9092"
-	consumerGroupID    = "legacy-device-gateway"
+	consumerGroupID    = ""
 	defaultFirmwareVer = "legacy-1.0"
 	defaultModel       = "legacy-sensor"
 	listenTimeout      = 10 * time.Second
@@ -61,8 +61,8 @@ func main() {
 		Brokers:         brokers,
 		Topic:           topicLegacyAdd,
 		GroupID:         consumerGroupID,
-		MinBytes:        1e3,
-		MaxBytes:        1e6,
+		StartOffset:     kafka.FirstOffset,
+		CommitInterval:  time.Second,
 		ReadLagInterval: -1,
 	})
 	defer reader.Close()

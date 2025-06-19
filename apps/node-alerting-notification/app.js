@@ -6,12 +6,12 @@ const app = express();
 const port = 3005;
 
 const kafka = new Kafka({
-  clientId: "action-node-service",
+  clientId: "notification-node-service",
   brokers: ["kafka:9092"],
   logLevel: logLevel.INFO,
 });
 
-const consumer = kafka.consumer({ groupId: "node-consumer-group" });
+const consumer = kafka.consumer({ groupId: "node-notification-group" });
 const admin = kafka.admin();
 
 const topics = ["deleteDeviceNotification", "newDeviceNotification"];
