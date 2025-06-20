@@ -11,21 +11,15 @@ Boundary(coziness, "Coziness (core domain)") {
     System_Ext(partnerDevices, "Устройства партнёров", "Сторонние устройства с поддержкой интеграции")
     System_Ext(voiceAssistant, "AI-ассистенты", "Голосовые помощники: Alexa, Google Assistant и т.п.")
     System_Ext(feedbackSystem, "СRM/CallCenter Software", "Принимает фидбек пользователей и создаёт тикеты в системе")
-    System_Ext(kafka, "Kafka", "Шина сообщений между микросервисами")
     System_Ext(cams, "Cams", "Камеры/прочие поточные устройства")
-    System_Ext(minio, "MinIO", "Хранение видеопотоков")
-    System_Ext(grafana, "Grafana", "Визуализация логов и метрик")
 
     Rel(user, system, "Управляет через интерфейсы, приложения")
-    Rel(voiceAssistant, system, "Передаёт команды", "REST / MQTT (в персективе)")
-    Rel(nativeDevices, system, "Интегрированы напрямую", "REST")
+    Rel(voiceAssistant, system, "Передаёт команды", "REST/MQTT")
+    Rel(nativeDevices, system, "Интегрированы напрямую", "REST/MQTT")
     Rel(cams, system, "Интегрированы напрямую", "WebRTC")
-    Rel(partnerDevices, system, "Работают через шлюзы", "REST")
-    Rel(system, kafka, "Обменивается событиями и командами")
-    Rel(system, minio, "Сохраняет видеопотоки", "S3 API")
-    Rel(system, grafana, "Отправляет метрики и логи")
+    Rel(partnerDevices, system, "Работают через шлюзы", "REST/MQTT")
     Rel(user, feedbackSystem, "Оставляет фидбек, запрашивает помощь", "Web / Mobile")
-    Rel(feedbackSystem, system, "Создаёт тикеты", "REST")
+    Rel(feedbackSystem, system, "Создаёт тикеты", "REST/MQTT")
 
 }
 @enduml

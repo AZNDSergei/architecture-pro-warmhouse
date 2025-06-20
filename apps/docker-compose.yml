@@ -41,6 +41,48 @@ services:
       timeout: 5s
       retries: 5
 
+  keycloak-db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak
+    volumes:
+      - keycloak_db_data:/var/lib/postgresql/data
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    restart: unless-stopped
+    depends_on:
+      keycloak-db:
+        condition: service_started
+    command:
+      - start-dev             
+      - --import-realm 
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    volumes:
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
+    ports:
+      - "8090:8080"       
+
+  go-management-gateway:
+    build: ./go-management-gateway
+    depends_on:
+      - device-management
+    ports:
+      - "8081:8081"
+    environment:
+      - API_KEY=my-secret-token
+      - KEYCLOAK_ISSUER_URL=http://keycloak:8080/realms/iot-realm
+      - KEYCLOAK_CLIENT_ID=management-gateway
+      
   device-management:
     build: device-management/.
     depends_on:
@@ -51,6 +93,8 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres:device-management-user@db:5432/dockert
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - OIDC_ISSUER=http://keycloak:8080/realms/iot-realm
+      - OIDC_AUDIENCE=device-management
     ports:
       - 8000:80
 
@@ -62,7 +106,6 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=device-management-user
       - POSTGRES_DB=dockert
-
 
   legacy-monolith:
     build: ./legacy-monolith-temperature/temperature-api/
@@ -171,15 +214,6 @@ services:
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
 
-  go-management-gateway:
-    build: ./go-management-gateway
-    depends_on:
-      - device-management
-    ports:
-      - "8081:8081"
-    environment:
-      - API_KEY=my-secret-token
-
   net-device-metrics:
     build: ./net-device-metrics
     depends_on:
@@ -251,3 +285,4 @@ volumes:
   loki-data:
   prometheus-data:
   postgres_data_old:
+  keycloak_db_data:

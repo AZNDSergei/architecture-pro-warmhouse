@@ -1,0 +1,54 @@
+@startuml go-bridge-level4
+
+skinparam packageStyle rectangle
+skinparam linetype ortho
+hide circle
+
+package consumer {
+  class KafkaConsumer {
+    +Listen(ctx, brokersCSV, handler)
+  }
+}
+
+package mapper {
+  class Sensor {
+    id: int
+    name: string
+    type: string
+    location: string
+    unit: string
+    status: string
+    value: float64
+  }
+
+  class Device {
+    id: uuid.UUID
+    name: string
+    type: string
+    model: string
+    firmware_version: string
+    status: string
+  }
+
+  class SensorMapper {
+    +SensorJSONToDevice(raw []byte) Device
+    -mapSensorToDevice(s Sensor) Device
+  }
+}
+
+package sender {
+  class DeviceSender {
+    +Send(ctx, device, token)
+  }
+}
+
+package main {
+  class BridgeMain {
+    main()
+  }
+}
+
+KafkaConsumer  -->  BridgeMain : callback flow (выход к kafka)
+BridgeMain     -->  SensorMapper : парсинг, маппинг
+BridgeMain     -->  DeviceSender : отправка на новый сервис
+@enduml

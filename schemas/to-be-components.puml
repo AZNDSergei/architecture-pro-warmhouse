@@ -1,0 +1,13 @@
+@startuml go-bridge-components
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/v1.0.0/C4_Component.puml
+
+Container_Boundary(gb, "go-bridge-for-legacy") {
+    Component(consumer, "Consumer", "segmentio/kafka-go", "Читает сообщение от legacy-системы")
+    Component(mapper,   "Mapper", "Go struct → struct", "Выполняет маппинг сущности из старого формата в новый")
+    Component(rest,     "Sender", "net/http", "Посылает запрос создания сенсора на новый v2 api")
+}
+
+Rel(consumer, mapper, "Передает старую сущность")
+Rel(mapper, rest, "Передает новую сущность")
+
+@enduml

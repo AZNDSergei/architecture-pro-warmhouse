@@ -17,6 +17,13 @@ System_Boundary(state_control, "Контекст: Контроль состоя�
   Container(native_device_gateway, "Native Device Gateway", "Go", "Прием запросов с родных устройств")
   Container(side_device_gateway, "Side Device Gateway (mapping)", "Go", "Прием запросов с устройств партнеров")
   Container(device_metrics, "Device Metrics", ".NET Console APP", "Прием метрик и запись в Prometheus")
+  Container(grafana, "Grafana", "Визуализация логов и метрик")
+  Container(prometheus, "Prometheus", "Сбор метрик")
+  Container(loki, "Loki", "Сбор логов")
+  Rel(device_metrics, loki, "REST", "Запись метрик")
+  Rel(device_metrics, prometheus, "REST", "Запись логов")
+  Rel(loki, grafana, "REST", "Передача данных для визуализации по таймеру")
+  Rel(prometheus, grafana, "REST", "Передача данных для визуализации по таймеру")
 }
 
 Rel(native_device_gateway, device_metrics, "kafka topic", "Передача метрик")
@@ -36,13 +43,6 @@ System_Boundary(action_initialization, "Контекст: Исполнение �
 
 Rel(action_initiation, immutable, "HTTP")
 Container(go_bridge, "Go", "Мост для legacy-системы", "Маппинг legacy-модели в новый формат")
-Container(grafana, "Grafana", "Визуализация логов и метрик")
-Container(prometheus, "Prometheus", "Сбор метрик")
-Container(loki, "Loki", "Сбор логов")
-Rel(device_metrics, loki, "REST", "Запись метрик")
-Rel(device_metrics, prometheus, "REST", "Запись логов")
-Rel(loki, grafana, "REST", "Передача данных для визуализации по таймеру")
-Rel(prometheus, grafana, "REST", "Передача данных для визуализации по таймеру")
 
 }
 Boundary(communication_sub, "Subdomain (supporting) - Поддомен коммуникации") {
@@ -60,15 +60,24 @@ System_Boundary(technical_support, "Контекст: Техническая п�
 
 Rel(supporting, nosql, "HTTP")
 }
-Container_Ext(kafka, "Kafka", "Внутренние коммуникации")
+
+Boundary(infrastructure, "Subdomain (supporting) - Поддомен - Инфраструкутра") {
+System_Boundary(cross_cutting, "Контекст: Сквозная функциональность") {
+Container(kafka, "Kafka", "Внутренние коммуникации")
+Container(authentication_provider, "KeyCloak", "Провайдер аутентификации")
+}
+System_Boundary(internal_system, "Контекст: Транзитные системы") {
+Container(old_monolith, "Старая версия приложения", "Теплый дом")
+}
+}
 
 Container_Ext(nativeDevices, "Нативные устройства", "Родные устройства")
 Container_Ext(partnerDevices, "Устройства партнёров", "Сторонние устройства с поддержкой интеграции")
 Container_Ext(voiceAssistant, "AI-ассистенты", "Голосовые помощники: Alexa, Google Assistant и т.п.")
 Container_Ext(external_feedback_system, "СRM/CallCenter Software", "Принимает фидбек пользователей и создаёт тикеты в системе")
-Container_Ext(kafka, "Kafka", "Шина сообщений между микросервисами")
 Container_Ext(cams, "Cams", "Камеры/прочие поточные устройства")
-Container_Ext(old_monolith, "Старая версия приложения", "Теплый дом")
+
+
 
 
 Rel(old_monolith, kafka, "topic",  "Передача команд со старого устройства в шину")

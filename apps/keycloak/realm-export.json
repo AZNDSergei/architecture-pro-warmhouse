@@ -1,0 +1,44 @@
+{
+  "realm": "iot-realm",
+  "enabled": true,
+  "displayName": "IoT Realm",
+  "clients": [
+    {
+      "clientId": "management-gateway",
+      "name": "management-gateway",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "CHANGE_ME_MANAGEMENT_GATEWAY_SECRET",
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "*"
+      ],
+      "webOrigins": [
+        "*"
+      ],
+      "attributes": {
+        "post.logout.redirect.uris": "*"
+      }
+    },
+    {
+      "clientId": "device-management",
+      "name": "device-management",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "CHANGE_ME_DEVICE_MANAGEMENT_SECRET",
+      "protocol": "openid-connect",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "redirectUris": [],
+      "webOrigins": []
+    }
+  ],
+  "users": [],
+  "groups": []
+}

@@ -1,13 +1,12 @@
-FROM golang:1.21
+FROM golang:1.24.4-alpine AS build         
 
 WORKDIR /app
-
-COPY go.mod go.sum ./
+COPY go.* ./
 RUN go mod download
 
 COPY . .
+RUN go build -o /go-management-gateway ./...
 
-RUN go build -o main .
-
-# Устанавливаем команду по умолчанию
-CMD ["./main"]
+FROM alpine:3.20
+COPY --from=build /go-management-gateway /usr/local/bin/
+ENTRYPOINT ["go-management-gateway"]

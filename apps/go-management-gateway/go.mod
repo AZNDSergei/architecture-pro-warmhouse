@@ -1,10 +1,13 @@
 module go-kafka-gateway
 
-go 1.20
+go 1.23.0
 
-require github.com/segmentio/kafka-go v0.4.48
+toolchain go1.24.4
+
+require github.com/coreos/go-oidc/v3 v3.14.1
 
 require (
-	github.com/klauspost/compress v1.15.9 // indirect
-	github.com/pierrec/lz4/v4 v4.1.15 // indirect
+	github.com/go-jose/go-jose/v4 v4.0.5 // indirect
+	golang.org/x/crypto v0.36.0 // indirect
+	golang.org/x/oauth2 v0.28.0 // indirect
 )

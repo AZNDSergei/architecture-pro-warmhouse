@@ -1,0 +1,83 @@
+asyncapi: 3.0.0
+info:
+  title: Legacy → Device bridge contract
+  version: 1.0.0
+  description: |
+    AsyncAPI контракт описывает взаимодействие между legacy-системой и новым сервисом через Kafka‑топик.
+    go-bridge-for-legacy подписан на топик `legacyAddDevice`, который используется для передачи данных о сенсоре.
+
+servers:
+  kafkaDev:
+    host: kafka
+    protocol: kafka
+    protocolVersion: '1.0.0'
+    description: Развёрнутый Kafka-инстанс
+
+channels:
+  legacyAddDevice:
+    address: legacyAddDevice
+    messages:
+      sensorAdded:
+        $ref: '#/components/messages/SensorAdded'
+    subscribe:
+      operationId: consumeSensorAdded
+      summary: go-bridge-for-legacy подписан на топик legacyAddDevice
+      description: |
+        Сообщения публикуются в момент добавления сенсора через старый REST-интерфейс (`api/v1.0/sensors`)
+    publish:
+      operationId: publishSensorAdded
+      summary: legacy-monolith-temperature публикует данные о сенсоре
+      description: |
+        Старое монолитное приложение формирует и публикует JSON-объект в Kafka‑топик.
+
+components:
+  messages:
+    SensorAdded:
+      name: SensorAdded
+      title: Новый сенсор
+      summary: JSON-данные, публикуемые в Kafka‑топик
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Sensor'
+          examples:
+            - name: ExampleSensor
+              summary: Пример данных от legacy-системы
+              payload:
+                id: 123
+                name: "Temperature‑Hall"
+                type: "temperature"
+                location: "Hall"
+                unit: "°C"
+                status: "active"
+                value: 23.5
+
+  schemas:
+    Sensor:
+      type: object
+      description: Описание сенсора legacy-системы
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+          description: Тип устройства (например, temperature, humidity)
+        location:
+          type: string
+          description: Местоположение устройства
+        unit:
+          type: string
+          description: Единица измерения
+        status:
+          type: string
+          description: Текущий статус устройства (например, active)
+        value:
+          type: number
+          format: float
+          description: Значение измерения
+      required:
+        - id
+        - name
+        - type
