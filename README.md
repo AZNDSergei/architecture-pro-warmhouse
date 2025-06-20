@@ -95,6 +95,9 @@
 [Диаграмма контекста](/schemas/to-be-context.puml)
 [Диаграмма контейнеров](/schemas/to-be-containers.puml)
 
+[Диаграмма компонентов go-bridge-for-legacy](/schemas/to-be-components.puml)
+[Диаграмма кода go-bridge-for-legacy](/schemas/to-be-code.puml)
+
 ## Задание 3. Разработка ER-диаграммы
 
 Ниже представлена простая схема таблиц умного дома, системы администрирования, контекста "Менеджмент устройств"
